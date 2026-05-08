@@ -1,6 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
+from functools import lru_cache
 
 load_dotenv()
 API_KEY = os.getenv("CMC_API_KEY")
@@ -11,11 +12,12 @@ HEADERS = {
     "Accept": "application/json"
 }
 
-def get_crypto(limit: int = 5, convert: str = "USD") -> list | None:
+@lru_cache(maxsize=1000)
+def get_crypto(start: int = 1, convert: str = "USD") -> list | None:
     endpoint = f"{BASE_URL}/cryptocurrency/listings/latest"
     params = {
-        "start": "1",
-        "limit": str(limit),
+        "start": str(start),
+        "limit": "1000",
         "convert": convert
     }
 
@@ -33,11 +35,59 @@ def get_crypto(limit: int = 5, convert: str = "USD") -> list | None:
         print(f"NET ERROR: {e}")
         return None
 
+def print_crypto(cryptos: list, page_size: int, page: int):
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+    page_data = cryptos[start_idx:end_idx]
+
+    print(f"{'№':<4} {'ID':<7} {'Название':<12} {'Символ':<6} {'Цена ($)':>12} {'Капитализация':>15}")
+    print("-" * 65)
+    for idx, coin in enumerate(page_data, start=start_idx + 1):
+        quote = coin["quote"]["USD"]
+        print(f"{idx:<4} {coin['id']:<7} {coin['name']:<12} {coin['symbol']:<6} "
+              f"${quote['price']:>10.2f} ${quote['market_cap']:>14,.0f}")
+
+def find_crypto(cryptos: list, name: str) -> list:
+    return [coin for coin in cryptos if name.lower() in coin['name'].lower()]
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+              
 if __name__ == "__main__":
-    cryptos = get_crypto(limit = 5, convert="USD")
-    if cryptos:
-        print(f"{'Название':<15} {'Символ':<6} {'Цена':>12} {'Капитализация':>15}")
-        print("-" * 52)
-        for coin in cryptos:
-            quote = coin["quote"]["USD"]
-            print(f"{coin['name']:<15} {coin['symbol']:<6} ${quote['price']:>11.2f} ${quote['market_cap']:>14,.0f}")
+    current_start = 1
+    current_page = 1
+    page_size = 10
+
+    cryptos = get_crypto()
+    if not cryptos:
+            print("Data fetching error")
+    while(True):
+        print_crypto(cryptos=cryptos, page_size=page_size, page=current_page)
+
+        print(f"Страница позиций {current_start}-{page_size * current_page}")
+        print("Нажмите Enter для следующей страницы, q для выхода")
+
+        user_input = input("> ").strip().lower()
+        if user_input == 'q':
+            break
+        elif user_input == 'n' or user_input == '':
+            current_start += page_size
+            current_page += 1
+        elif user_input == 'p' and current_page > 1:
+            current_start -= page_size
+            current_page -= 1
+        elif user_input == 'f':
+            print("Введите название криптовалюты для поиска:")
+            search_name = input("> ").strip()
+            results = find_crypto(cryptos, search_name)
+            if results:
+                clear_screen()
+                print(f"Результаты поиска для '{search_name}':")
+                print_crypto(results, page_size=len(results), page=1)
+                print("Нажмите любую клавишу для продолжения")
+                input()
+            else:
+                print("Криптовалюта не найдена.\nНажмите любую клавишу для продолжения")
+                input()
+        else: print("Неверная комнада")
+        clear_screen()
