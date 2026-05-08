@@ -87,7 +87,7 @@ if __name__ == "__main__":
         user_input = input("> ").strip().lower()
         if user_input == 'q':
             break
-        elif user_input == 'n' or user_input == '':
+        elif (user_input == 'n' or user_input == '') and current_start + page_size <= len(cryptos):
             current_start += page_size
             current_page += 1
         elif user_input == 'p' and current_page > 1:
