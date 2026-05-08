@@ -40,12 +40,29 @@ def print_crypto(cryptos: list, page_size: int, page: int):
     end_idx = start_idx + page_size
     page_data = cryptos[start_idx:end_idx]
 
-    print(f"{'№':<4} {'ID':<7} {'Название':<12} {'Символ':<6} {'Цена ($)':>12} {'Капитализация':>15}")
-    print("-" * 65)
+    header = (
+        f"{'№':<4} {'ID':<7} {'Название':<12} {'Символ':<6} "
+        f"{'Slug':<18} {'В обращении':>12} {'Цена ($)':>12} {'Капитализация':>15}"
+    )
+
+    print(header)
+    print("-" * 95)
+
     for idx, coin in enumerate(page_data, start=start_idx + 1):
         quote = coin["quote"]["USD"]
-        print(f"{idx:<4} {coin['id']:<7} {coin['name']:<12} {coin['symbol']:<6} "
-              f"${quote['price']:>10.2f} ${quote['market_cap']:>14,.0f}")
+        
+        coin_id = coin['id']
+        name = coin['name']
+        symbol = coin['symbol']
+        slug = coin['slug']
+        circulating = coin['circulating_supply']
+        price = quote['price']
+        market_cap = quote['market_cap']
+
+        print(
+            f"{idx:<4} {coin_id:<7} {name:<12} {symbol:<6} "
+            f"{slug:<18} {circulating:>12,.0f} {price:>10.2f}$ {market_cap:>14,.0f}$"
+        )
 
 def find_crypto(cryptos: list, name: str) -> list:
     return [coin for coin in cryptos if name.lower() in coin['name'].lower()]
