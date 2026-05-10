@@ -128,7 +128,7 @@ def main(page: ft.Page):
         get_crypto.cache_clear()
         data = get_crypto()
         
-        if data:  # ✅ ИСПРАВЛЕНО: условие теперь корректное
+        if data:
             cryptos = data.copy()
             filtered_cryptos = cryptos.copy()
             current_page = 1
@@ -140,7 +140,6 @@ def main(page: ft.Page):
             status_text.color = "red"
             page.update()
     
-    # ✅ КНОПКИ: текст передаётся первым аргументом (без text=)
     btn_prev = ft.ElevatedButton("⬅️ Назад", on_click=go_prev, disabled=True)
     btn_next = ft.ElevatedButton("Вперёд ➡️", on_click=go_next, disabled=True)
     btn_refresh = ft.ElevatedButton("🔄 Обновить данные", on_click=refresh_data)
